@@ -15,6 +15,8 @@ if not SPREADSHEET_ID:
     raise ValueError("SPREADSHEET_ID not set in ~/.bot.env")
 RANGE = os.environ["RANGE"]
 DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
+NOW = datetime.now(timezone.utc)
+WEEK_NUMBER = NOW.isocalendar()[1]  # ISO week number (1–53)
 
 # --- color handling with fuzzy match ---
 import math
@@ -89,10 +91,8 @@ def build_week_message(rowData):
     #timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     if not week_summary:
         return ""  # always return a string
-    now = datetime.now(timezone.utc)
-    week_number = now.isocalendar()[1]  # ISO week number (1–53)
-    return f"**Kalendarzyk grania na tydzień {week_number}** \n\n" + "\n\n".join(week_summary)
 
+    return f"**Kalendarzyk grania na tydzień {WEEK_NUMBER}** \n\n" + "\n\n".join(week_summary)
 
 # --- Compress day slots into ranges ---
 def process_day(day_name, times, players):
@@ -160,7 +160,9 @@ def send_to_discord(message):
 
 # --- Main ---
 def main():
-    data = fetch_griddata(SPREADSHEET_ID, RANGE)
+    sheet_name = f"Week_{WEEK_NUMBER}"
+    sheet_name_and_range = f"{sheet_name}!{RANGE}"
+    data = fetch_griddata(SPREADSHEET_ID, sheet_name_and_range)
     msg = build_week_message(data)
     print(msg)
     send_to_discord(msg)
